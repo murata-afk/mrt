@@ -28,7 +28,10 @@
 - `CLAUDE.md` … 本ファイル（設計・決定事項）
 - `PROGRESS.md` … 作業ログ
 - `docs/setup-connectors.md` … コネクタ確認メモ・仕様
-- （今後）`docs/`, スクリプト等を追加予定
+- `docs/workstyle-evolution.txt` … Workstyle Evolution（働き方の進化）調査メモ
+- `docs/templates/` … 候補日メールのひな形
+- `scripts/` … 自動化スクリプト置き場
+- `backups/` … 削除・更新前のバックアップ
 
 ## 会議調整の入力パラメータ（Phase 1 で人間が指定）
 - 面談相手のメールアドレス
