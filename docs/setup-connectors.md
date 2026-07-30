@@ -7,11 +7,17 @@
 
 | コネクタ | 用途 | このユーザー環境での状態 |
 |---|---|---|
-| Google Calendar | 空き時間取得 / 予定登録 / 会議室(リソース)予約 | ✅ 接続済み |
-| Gmail | 候補日メールの下書き作成 / 返信の読み取り | ✅ 接続済み |
+| Google Calendar | 予定取得（今日＋明日）/ 空き時間取得 / 予定登録 | ✅ 接続済み |
+| Slack | 予定関連の会話検索 / アドバイスの通知送信 | ✅ 接続済み（2026-01 GA） |
+| Gmail | 予定関連メール検索 / 下書き作成 / 返信読み取り | ✅ 接続済み |
 | Google Drive | （任意）バックアップ保存先 | ✅ 接続済み |
 
-※ 接続済み = Claude 側で `mcp__Gmail__*` `mcp__Google_Calendar__*` ツールが実際に呼べる状態を確認済み。
+※ 接続済み = Claude 側で `mcp__Google_Calendar__*` `mcp__Slack__*` `mcp__Gmail__*` ツールが実際に呼べる状態を確認済み。
+
+### Slack コネクタ補足（毎朝ブリーフ用）
+- 送信: `slack_send_message`（即時） / `slack_send_message_draft`（下書き）/ `slack_schedule_message`（予約）
+- 読み取り: `slack_search_public` `slack_read_channel` `slack_read_thread` など
+- 自分への DM = 自分の user_id を channel_id に指定。誤通知テストに最適。
 
 ## 重要な仕様（2026年時点・Web確認済み）
 
