@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MELTY HARAJUKU｜原宿のとろけるスイーツ専門店</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1a1a2e; --muted:#5a5a72; --card:#fff7fb; --line:#ffe0ef;
+  --pink:#ff4d9d; --mint:#37e6c0; --purple:#7b5cff; --shadow:0 18px 40px rgba(255,77,157,.15);
+}
+[data-theme="dark"]{
+  --bg:#0f1020; --fg:#f3f3ff; --muted:#a9a9c9; --card:#1a1b30; --line:#2a2b47;
+  --shadow:0 18px 40px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:"Hiragino Kaku Gothic ProN",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:18px;line-height:1.8;transition:background .3s,color .3s}
+img{max-width:100%;display:block}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+mark{background:linear-gradient(180deg,transparent 55%,#ffe64d 55%);color:var(--fg);-webkit-text-fill-color:var(--fg);padding:0 2px;border-radius:3px}
+[data-theme="dark"] mark{background:linear-gradient(180deg,transparent 55%,rgba(255,230,77,.55) 55%)}
+.dim{opacity:.18;filter:grayscale(.4);transition:opacity .3s,filter .3s}
+
+/* header */
+header{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+  background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:16px;height:70px}
+.logo{font-weight:900;font-size:24px;letter-spacing:.5px;
+  background:linear-gradient(90deg,var(--pink),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+nav{display:flex;gap:18px;margin-left:8px}
+nav a{text-decoration:none;color:var(--muted);font-weight:700;font-size:15px}
+nav a:hover{color:var(--pink)}
+.tools{margin-left:auto;display:flex;align-items:center;gap:10px}
+.search{position:relative}
+.search input{width:190px;max-width:44vw;padding:10px 14px;border:2px solid var(--line);border-radius:999px;
+  background:var(--bg);color:var(--fg);font-size:15px;outline:none}
+.search input:focus{border-color:var(--pink)}
+.count{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted)}
+.iconbtn{border:2px solid var(--line);background:var(--bg);color:var(--fg);border-radius:999px;
+  width:44px;height:44px;font-size:18px;cursor:pointer;position:relative}
+.iconbtn:hover{border-color:var(--pink)}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--pink);color:#fff;border-radius:999px;
+  min-width:20px;height:20px;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.badge[hidden]{display:none}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.reveal.on{opacity:1;transform:none}
+
+/* hero */
+.hero{padding:80px 0 60px;text-align:center;position:relative;overflow:hidden}
+.hero h1{font-size:clamp(40px,8vw,76px);line-height:1.15;margin:.2em 0;font-weight:900}
+.hero .grad{background:linear-gradient(90deg,var(--pink),var(--mint));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:clamp(18px,2.4vw,24px);color:var(--muted);max-width:640px;margin:16px auto 28px}
+.cta{display:inline-flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.btn{border:none;cursor:pointer;font-size:18px;font-weight:800;padding:16px 30px;border-radius:999px;text-decoration:none;
+  transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-3px)}
+.btn.primary{background:linear-gradient(90deg,var(--pink),var(--purple));color:#fff;box-shadow:var(--shadow)}
+.btn.ghost{background:var(--card);color:var(--fg);border:2px solid var(--line)}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.5;z-index:-1}
+.blob.a{width:320px;height:320px;background:var(--pink);top:-60px;left:-40px}
+.blob.b{width:300px;height:300px;background:var(--mint);bottom:-80px;right:-40px}
+
+/* sections */
+section{padding:64px 0}
+h2.title{font-size:clamp(30px,5vw,48px);font-weight:900;margin:0 0 6px}
+.sub{color:var(--muted);margin:0 0 34px;font-size:18px}
+
+/* menu grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:var(--shadow);
+  display:flex;flex-direction:column}
+.thumb{height:150px;display:flex;align-items:center;justify-content:center;font-size:64px}
+.card .body{padding:16px 18px 20px}
+.card h3{margin:0 0 6px;font-size:22px}
+.card p{margin:0 0 10px;color:var(--muted);font-size:16px}
+.card .row{display:flex;align-items:center;justify-content:space-between}
+.price{font-weight:900;font-size:20px;color:var(--pink)}
+.fav{border:2px solid var(--line);background:var(--bg);cursor:pointer;border-radius:999px;width:44px;height:44px;font-size:18px}
+.fav.active{background:var(--pink);border-color:var(--pink)}
+
+/* features */
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px}
+.feat .box{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px;text-align:center}
+.feat .emo{font-size:48px}
+
+/* gallery */
+.gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.gal div{aspect-ratio:1;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:54px;
+  background:linear-gradient(135deg,var(--card),var(--line))}
+
+/* faq */
+.faq{max-width:800px}
+.q{border:1px solid var(--line);border-radius:16px;margin-bottom:14px;background:var(--card);overflow:hidden}
+.q button{width:100%;text-align:left;background:none;border:none;color:var(--fg);cursor:pointer;
+  font-size:19px;font-weight:800;padding:20px 22px;display:flex;justify-content:space-between;gap:12px}
+.q .ans{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 22px}
+.q .ans p{margin:0 0 20px;color:var(--muted);font-size:17px}
+.q.open .ans{max-height:240px}
+.q .mk{transition:transform .3s}
+.q.open .mk{transform:rotate(45deg)}
+
+/* contact */
+.form{max-width:640px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px}
+.form label{display:block;font-weight:800;margin:16px 0 6px}
+.form input,.form textarea{width:100%;padding:14px;border:2px solid var(--line);border-radius:12px;
+  background:var(--bg);color:var(--fg);font-size:17px;font-family:inherit}
+.form input:focus,.form textarea:focus{outline:none;border-color:var(--pink)}
+.err{color:var(--pink);font-size:14px;font-weight:700;min-height:18px;margin-top:4px}
+.ok{background:linear-gradient(90deg,var(--mint),var(--purple));color:#fff;border-radius:14px;padding:16px;
+  font-weight:800;text-align:center;margin-top:16px}
+.ok[hidden]{display:none}
+
+footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted);text-align:center}
+.nohit{display:none;padding:16px 0;color:var(--pink);font-weight:800}
+.nohit.show{display:block}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <div class="logo">🍮 MELTY HARAJUKU</div>
+    <nav>
+      <a href="#menu">メニュー</a>
+      <a href="#feature">こだわり</a>
+      <a href="#faq">Q&amp;A</a>
+      <a href="#contact">お問い合わせ</a>
+    </nav>
+    <div class="tools">
+      <div class="search">
+        <input id="q" type="search" placeholder="🔍 サイト内検索…" aria-label="サイト内検索" autocomplete="off">
+        <span class="count" id="count" aria-live="polite"></span>
+      </div>
+      <button class="iconbtn" id="favBtn" title="お気に入り" aria-label="お気に入り一覧">♥<span class="badge" id="favBadge" hidden>0</span></button>
+      <button class="iconbtn" id="theme" title="ダークモード切替" aria-label="ダークモード切替">🌙</button>
+    </div>
+  </div>
+</header>
+
+<main id="content">
+<section class="hero">
+  <div class="blob a"></div><div class="blob b"></div>
+  <div class="wrap">
+    <h1>原宿で1番大きい<br><span class="grad">とろけるスイーツ</span></h1>
+    <p>TikTokで累計2億回再生。焼きたて・作りたての“メルティ食感”を、原宿のど真ん中で。</p>
+    <div class="cta">
+      <a href="#menu" class="btn primary">メニューを見る</a>
+      <a href="#contact" class="btn ghost">予約・お問い合わせ</a>
+    </div>
+  </div>
+</section>
+
+<section id="menu">
+  <div class="wrap">
+    <h2 class="title reveal">人気メニュー</h2>
+    <p class="sub reveal">♥を押すとお気に入りに保存できます（次に来ても残ります）</p>
+    <div class="grid" id="menuGrid"></div>
+    <div class="nohit" id="nohit" aria-live="polite">「<span id="nohitWord"></span>」に一致する内容は見つかりませんでした。</div>
+  </div>
+</section>
+
+<section id="feature">
+  <div class="wrap">
+    <h2 class="title reveal">3つのこだわり</h2>
+    <p class="sub reveal">おいしいには理由があります</p>
+    <div class="feat">
+      <div class="box reveal"><div class="emo">🥛</div><h3>毎朝仕入れる生クリーム</h3><p>北海道産の生乳を毎朝直送。だからこそのミルキーでとろける口どけ。</p></div>
+      <div class="box reveal"><div class="emo">🔥</div><h3>注文を受けてから焼く</h3><p>作り置きなし。オーダーごとに焼き上げるから、外はカリッ中はとろ〜り。</p></div>
+      <div class="box reveal"><div class="emo">📸</div><h3>映える限定ビジュアル</h3><p>季節ごとに変わる限定デコ。どこを撮っても“おっ、すごい！”な一枚に。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="gallery">
+  <div class="wrap">
+    <h2 class="title reveal">ギャラリー</h2>
+    <p class="sub reveal">#メルティ原宿 で毎日たくさん投稿されています</p>
+    <div class="gal reveal">
+      <div>🍓</div><div>🧁</div><div>🍮</div><div>🍦</div><div>🍩</div><div>🍰</div><div>🥞</div><div>🍫</div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2 class="title reveal">よくある質問</h2>
+    <p class="sub reveal">気になることはここでチェック</p>
+    <div class="faq" id="faqList"></div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="wrap">
+    <h2 class="title reveal">お問い合わせ</h2>
+    <p class="sub reveal">予約・取材・コラボのご相談はこちらから</p>
+    <form class="form reveal" id="form" novalidate>
+      <label for="name">お名前 <span style="color:var(--pink)">*</span></label>
+      <input id="name" type="text" placeholder="山田 花子">
+      <div class="err" id="eName"></div>
+      <label for="email">メールアドレス <span style="color:var(--pink)">*</span></label>
+      <input id="email" type="email" placeholder="you@example.com">
+      <div class="err" id="eEmail"></div>
+      <label for="msg">ご用件 <span style="color:var(--pink)">*</span></label>
+      <textarea id="msg" rows="4" placeholder="来店希望日やご相談内容をどうぞ"></textarea>
+      <div class="err" id="eMsg"></div>
+      <button type="submit" class="btn primary" style="margin-top:18px;width:100%">送信する</button>
+      <div class="ok" id="ok" hidden>✅ 送信ありがとうございます！2営業日以内にご返信します。</div>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="logo" style="font-size:20px">🍮 MELTY HARAJUKU</div>
+    <p>〒150-0001 東京都渋谷区神宮前1-1-1／11:00-20:00 無休<br>Instagram @melty_harajuku ・ TikTok @melty_harajuku</p>
+    <p style="font-size:14px">© 2026 MELTY HARAJUKU. This is a demo site.</p>
+  </div>
+</footer>
+
+<script>
+"use strict";
+/* ---------- データ ---------- */
+const MENU=[
+  {emo:"🍮",name:"とろけるプリン",desc:"看板メニュー。スプーンで崩すととろ〜り。",price:"¥680"},
+  {emo:"🧁",name:"雲カップケーキ",desc:"ふわふわクリームが雲みたいな新食感。",price:"¥580"},
+  {emo:"🍓",name:"苺まみれパフェ",desc:"あまおうを贅沢に。断面まで映える。",price:"¥1,280"},
+  {emo:"🍦",name:"ネオンソフト",desc:"光るソフトクリーム。夜の原宿映えNo.1。",price:"¥720"},
+  {emo:"🥞",name:"スフレパンケーキ",desc:"厚さ5cmの焼きたてスフレ。ぷるぷる揺れる。",price:"¥1,180"},
+  {emo:"🍫",name:"ガナッシュボンボン",desc:"濃厚チョコが口の中でとろける大人の味。",price:"¥640"}
+];
+const FAQ=[
+  {q:"予約はできますか？",a:"はい。お問い合わせフォームまたはお電話で承ります。土日は混み合うため事前予約がおすすめです。"},
+  {q:"テイクアウトはありますか？",a:"プリン・ボンボン・カップケーキはテイクアウト可能です。ソフトクリームとパフェは店内限定です。"},
+  {q:"アレルギー表示はありますか？",a:"全メニューに卵・乳・小麦などの主要アレルゲンを表示しています。スタッフにお気軽にお尋ねください。"},
+  {q:"一番混む時間は？",a:"平日は15〜17時、休日は13〜16時が特に混雑します。開店直後の午前中が比較的スムーズです。"}
+];
+
+/* ---------- 安全なユーティリティ ---------- */
+function escapeRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+const $=id=>document.getElementById(id);
+
+/* ---------- メニュー描画（お気に入り） ---------- */
+const favKey="melty_favs";
+let favs;
+try{const parsed=JSON.parse(localStorage.getItem(favKey)||"[]");
+  favs=new Set(Array.isArray(parsed)?parsed.filter(x=>typeof x==="string"):[]);}
+catch(_){favs=new Set();}
+function saveFavs(){localStorage.setItem(favKey,JSON.stringify([...favs]));updateBadge();}
+function updateBadge(){const b=$("favBadge");if(favs.size){b.textContent=favs.size;b.hidden=false;}else b.hidden=true;}
+function renderMenu(){
+  const g=$("menuGrid");g.textContent="";
+  MENU.forEach((m,i)=>{
+    const card=document.createElement("article");card.className="card reveal";card.dataset.name=m.name;
+    const t=document.createElement("div");t.className="thumb";t.textContent=m.emo;
+    const body=document.createElement("div");body.className="body";
+    const h=document.createElement("h3");h.textContent=m.name;
+    const p=document.createElement("p");p.textContent=m.desc;
+    const row=document.createElement("div");row.className="row";
+    const pr=document.createElement("span");pr.className="price";pr.textContent=m.price;
+    const fav=document.createElement("button");fav.className="fav"+(favs.has(m.name)?" active":"");
+    fav.textContent="♥";fav.setAttribute("aria-label",m.name+" をお気に入り");
+    fav.addEventListener("click",()=>{
+      if(favs.has(m.name)){favs.delete(m.name);fav.classList.remove("active");}
+      else{favs.add(m.name);fav.classList.add("active");}
+      saveFavs();
+    });
+    row.append(pr,fav);body.append(h,p,row);card.append(t,body);g.append(card);
+  });
+}
+
+/* ---------- FAQ アコーディオン ---------- */
+function renderFaq(){
+  const list=$("faqList");list.textContent="";
+  FAQ.forEach(f=>{
+    const item=document.createElement("div");item.className="q";
+    const btn=document.createElement("button");btn.setAttribute("aria-expanded","false");
+    const label=document.createElement("span");label.textContent=f.q;
+    const mk=document.createElement("span");mk.className="mk";mk.textContent="＋";
+    btn.append(label,mk);
+    const ans=document.createElement("div");ans.className="ans";
+    const p=document.createElement("p");p.textContent=f.a;ans.append(p);
+    btn.addEventListener("click",()=>{
+      const open=item.classList.toggle("open");
+      btn.setAttribute("aria-expanded",open?"true":"false");
+    });
+    item.append(btn,ans);list.append(item);
+  });
+}
+
+/* ---------- サイト内検索（ハイライト＋絞り込み） ---------- */
+const SEARCH_SEL="section h1,section h2,section h3,section p,.card,.box,.q";
+function clearHighlights(){
+  document.querySelectorAll("mark[data-h]").forEach(mk=>{
+    const t=document.createTextNode(mk.textContent);mk.replaceWith(t);
+  });
+  document.querySelectorAll(".dim").forEach(e=>e.classList.remove("dim"));
+  $("content").normalize(); // 断片化したテキストノードを再結合し、次回検索の取りこぼしを防ぐ
+}
+function highlightIn(node,re){
+  let hits=0;
+  const walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT);
+  const texts=[];while(walker.nextNode())texts.push(walker.currentNode);
+  texts.forEach(tn=>{
+    if(tn.parentNode&&tn.parentNode.nodeName==="MARK")return;
+    const s=tn.nodeValue;if(!re.test(s))return;
+    re.lastIndex=0;
+    const frag=document.createDocumentFragment();let last=0,m;
+    while((m=re.exec(s))){
+      if(m.index>last)frag.append(document.createTextNode(s.slice(last,m.index)));
+      const mk=document.createElement("mark");mk.dataset.h="1";mk.textContent=m[0];frag.append(mk);
+      last=m.index+m[0].length;hits++;
+      if(m.index===re.lastIndex)re.lastIndex++;
+    }
+    if(last<s.length)frag.append(document.createTextNode(s.slice(last)));
+    tn.replaceWith(frag);
+  });
+  return hits;
+}
+function runSearch(raw){
+  clearHighlights();
+  const term=raw.trim();
+  $("nohit").classList.remove("show");
+  if(!term){$("count").textContent="";return;}
+  const re=new RegExp(escapeRe(term),"gi");
+  let total=0;
+  // ブロック単位で絞り込み
+  const blocks=document.querySelectorAll("#menu .card, #feature .box, #faq .q, #gallery .gal div");
+  document.querySelectorAll(SEARCH_SEL).forEach(el=>{
+    total+=highlightIn(el,re);
+  });
+  // カード/ボックス/QAはヒットしなければ薄く
+  blocks.forEach(b=>{
+    const hit=b.querySelector("mark[data-h]")||re.test(b.textContent);
+    re.lastIndex=0;
+    if(!hit)b.classList.add("dim");
+  });
+  $("count").textContent=total?total+"件":"0件";
+  if(total===0){$("nohitWord").textContent=term;$("nohit").classList.add("show");}
+}
+let searchTimer=null;
+$("q").addEventListener("input",e=>{
+  clearTimeout(searchTimer);
+  const v=e.target.value;
+  searchTimer=setTimeout(()=>runSearch(v),120);
+});
+
+/* ---------- お気に入りボタン（一覧トースト） ---------- */
+$("favBtn").addEventListener("click",()=>{
+  if(!favs.size){alert("まだお気に入りはありません。メニューの♥を押して保存してみてください！");return;}
+  alert("お気に入り("+favs.size+"件):\n・"+[...favs].join("\n・"));
+});
+
+/* ---------- ダークモード ---------- */
+const themeBtn=$("theme");
+function applyTheme(t){
+  if(t==="dark"){document.documentElement.setAttribute("data-theme","dark");themeBtn.textContent="☀️";}
+  else{document.documentElement.removeAttribute("data-theme");themeBtn.textContent="🌙";}
+}
+applyTheme(localStorage.getItem("melty_theme")||"light");
+themeBtn.addEventListener("click",()=>{
+  const dark=document.documentElement.getAttribute("data-theme")==="dark";
+  const next=dark?"light":"dark";localStorage.setItem("melty_theme",next);applyTheme(next);
+});
+
+/* ---------- スクロール出現アニメ ---------- */
+function initReveal(){
+  const io=new IntersectionObserver((ents)=>{
+    ents.forEach(en=>{if(en.isIntersecting){en.target.classList.add("on");io.unobserve(en.target);}});
+  },{threshold:.12});
+  document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+}
+
+/* ---------- お問い合わせフォーム ---------- */
+$("form").addEventListener("submit",e=>{
+  e.preventDefault();
+  let ok=true;
+  const name=$("name").value.trim(),email=$("email").value.trim(),msg=$("msg").value.trim();
+  $("eName").textContent="";$("eEmail").textContent="";$("eMsg").textContent="";$("ok").hidden=true;
+  if(!name){$("eName").textContent="お名前を入力してください";ok=false;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$("eEmail").textContent="正しいメールアドレスを入力してください";ok=false;}
+  if(msg.length<5){$("eMsg").textContent="ご用件を5文字以上で入力してください";ok=false;}
+  if(ok){$("ok").hidden=false;e.target.reset();$("ok").scrollIntoView({behavior:"smooth",block:"center"});}
+});
+
+/* ---------- 起動 ---------- */
+renderMenu();renderFaq();updateBadge();initReveal();
+</script>
+</body>
+</html>
