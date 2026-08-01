@@ -141,11 +141,7 @@ header.top{display:flex;align-items:center;gap:14px;padding:18px 0}
       <h2>振り分け分布</h2>
       <div class="desc">100点満点スコアで自動的に3段階へ振り分けています</div>
       <div class="dist" id="dist"></div>
-      <div class="legend">
-        <span><i class="dot" style="background:var(--mint)"></i>自動でOK（80点〜）</span>
-        <span><i class="dot" style="background:var(--amber)"></i>人が確認（50〜79点）</span>
-        <span><i class="dot" style="background:var(--red)"></i>却下候補（〜49点）</span>
-      </div>
+      <div class="legend" id="legend"></div>
     </div>
     <div class="panel">
       <h2>システム全体像</h2>
@@ -168,15 +164,15 @@ header.top{display:flex;align-items:center;gap:14px;padding:18px 0}
 
           <rect x="400" y="30" width="150" height="56" rx="12" fill="#e9fbf4" stroke="#12b886"/>
           <text x="475" y="55" fill="#12b886">自動でOK</text>
-          <text x="475" y="73" fill="#69708c" font-size="12">80点〜</text>
+          <text x="475" y="73" fill="#69708c" font-size="12" id="svgAuto">80点〜</text>
 
           <rect x="400" y="122" width="150" height="56" rx="12" fill="#fff7e6" stroke="#f59f00"/>
           <text x="475" y="147" fill="#f59f00">人が確認</text>
-          <text x="475" y="165" fill="#69708c" font-size="12">50〜79点</text>
+          <text x="475" y="165" fill="#69708c" font-size="12" id="svgReview">50〜79点</text>
 
           <rect x="400" y="214" width="150" height="56" rx="12" fill="#ffeeee" stroke="#fa5252"/>
           <text x="475" y="239" fill="#fa5252">却下候補</text>
-          <text x="475" y="257" fill="#69708c" font-size="12">〜49点</text>
+          <text x="475" y="257" fill="#69708c" font-size="12" id="svgReject">〜49点</text>
 
           <rect x="600" y="120" width="150" height="64" rx="12" fill="#ffeef6" stroke="#ff4d9d"/>
           <text x="675" y="145" fill="#ff4d9d">承認ゲート</text>
@@ -333,8 +329,12 @@ const TIER_COLOR={auto:"var(--mint)",review:"var(--amber)",reject:"var(--red)"};
 const STAGE_LABEL={triaged:"未処理",approved:"承認済(返信待ち)",sent:"送信済",rejected:"却下済"};
 
 /* ========== 設定 ========== */
-function settings(){return load(K.settings,{thAuto:80,thReview:50,
-  tplReserve:"この度はご予約のお問い合わせをありがとうございます。ご希望の日時で承りました。当日お会いできるのを楽しみにしております。— MELTY HARAJUKU"});}
+function settings(){
+  const def={thAuto:80,thReview:50,
+    tplReserve:"この度はご予約のお問い合わせをありがとうございます。ご希望の日時で承りました。当日お会いできるのを楽しみにしております。— MELTY HARAJUKU"};
+  const v=load(K.settings,{});
+  return {...def,...(v&&typeof v==="object"&&!Array.isArray(v)?v:{})};
+}
 
 /* ========== 初期化 ========== */
 function seed(){
@@ -347,14 +347,15 @@ function seed(){
   save(K.items,items);save(K.audit,[{t:new Date().toISOString(),msg:"サンプル"+items.length+"件を投入し自動トリアージしました"}]);
 }
 function ensure(){if(!load(K.items,null))seed();}
-function items(){return load(K.items,[]);}
+function items(){const v=load(K.items,[]);return Array.isArray(v)?v:[];}
 function setItems(a){save(K.items,a);}
 function logAudit(msg){const a=load(K.audit,[]);a.unshift({t:new Date().toISOString(),msg});save(K.audit,a.slice(0,60));}
-function recalc(){const st=settings();setItems(items().map(it=>({...it,tier:tierOf(it.score)})));}
+function recalc(){setItems(items().map(it=>({...it,tier:tierOf(it.score)})));}
 
 /* ========== 描画ヘルパ ========== */
 function scoreColor(s){return s>=settings().thAuto?"var(--mint)":(s>=settings().thReview?"var(--amber)":"var(--red)");}
-function esc(t){const d=document.createElement("div");d.textContent=t==null?"":t;return d.innerHTML;}
+function esc(t){const d=document.createElement("div");d.textContent=t==null?"":t;
+  return d.innerHTML.replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 function fmt(iso){const d=new Date(iso);return d.toLocaleString("ja-JP",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});}
 
 /* ---- ダッシュボード ---- */
@@ -371,6 +372,16 @@ function renderDash(){
   $("dist").innerHTML=["auto","review","reject"].map(t=>{
     const w=c[t]/tot*100;return w?`<span style="width:${w}%;background:${TIER_COLOR[t]}">${c[t]}</span>`:"";
   }).join("");
+  // 凡例と図解のしきい値を設定値に同期
+  const st=settings();
+  $("legend").innerHTML=[
+    ["var(--mint)",`自動でOK（${st.thAuto}点〜）`],
+    ["var(--amber)",`人が確認（${st.thReview}〜${st.thAuto-1}点）`],
+    ["var(--red)",`却下候補（〜${st.thReview-1}点）`]
+  ].map(l=>`<span><i class="dot" style="background:${l[0]}"></i>${l[1]}</span>`).join("");
+  if($("svgAuto"))$("svgAuto").textContent=st.thAuto+"点〜";
+  if($("svgReview"))$("svgReview").textContent=st.thReview+"〜"+(st.thAuto-1)+"点";
+  if($("svgReject"))$("svgReject").textContent="〜"+(st.thReview-1)+"点";
   const a=load(K.audit,[]);
   $("audit").innerHTML=a.length?a.map(x=>`<div><b>${fmt(x.t)}</b> — ${esc(x.msg)}</div>`).join(""):'<div class="empty">記録はまだありません</div>';
 }
@@ -458,7 +469,7 @@ function openDetail(id){
       <dt>状態</dt><dd>${STAGE_LABEL[it.stage]}</dd>
       <dt>本文</dt><dd>${esc(it.message)}</dd>
     </dl>
-    <div class="reasons">${it.reasons.map(r=>`<span>${esc(r)}</span>`).join("")}</div>
+    <div class="reasons">${(it.reasons||[]).map(r=>`<span>${esc(r)}</span>`).join("")}</div>
     <div class="acts"><button class="btn s" onclick="closeModal()">閉じる</button></div>`);
 }
 function askApprove(id){const it=find(id);if(!it)return;
