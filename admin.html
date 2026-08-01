@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MELTY 受付トリアージ管理｜社内ツール</title>
+<style>
+:root{
+  --bg:#f6f7fb; --panel:#ffffff; --fg:#1c2033; --muted:#69708c; --line:#e6e8f2;
+  --pink:#ff4d9d; --mint:#12b886; --amber:#f59f00; --red:#fa5252; --blue:#4c6ef5;
+  --shadow:0 10px 30px rgba(30,40,90,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-size:16px;
+  font-family:"Hiragino Kaku Gothic ProN",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.7}
+h1,h2,h3{margin:0}
+.app{max-width:1180px;margin:0 auto;padding:0 18px 60px}
+header.top{display:flex;align-items:center;gap:14px;padding:18px 0}
+.brand{font-weight:900;font-size:22px}
+.brand span{color:var(--pink)}
+.tagline{color:var(--muted);font-size:14px}
+.spacer{margin-left:auto}
+.reset{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 14px;cursor:pointer;font-size:14px;color:var(--muted)}
+.reset:hover{border-color:var(--pink);color:var(--pink)}
+
+/* tabs */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:2px solid var(--line);margin-bottom:22px}
+.tab{border:none;background:none;padding:14px 18px;font-size:16px;font-weight:800;color:var(--muted);
+  cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab.active{color:var(--pink);border-color:var(--pink)}
+.view{display:none}
+.view.active{display:block}
+
+/* hint */
+.hint{background:linear-gradient(90deg,rgba(76,110,245,.08),rgba(18,184,134,.08));
+  border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:12px;padding:14px 18px;margin:0 0 22px}
+.hint b{color:var(--blue)}
+.hint ul{margin:8px 0 0;padding-left:20px}
+.hint li{margin:2px 0}
+
+/* cards / KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.kpi .n{font-size:34px;font-weight:900;line-height:1.1}
+.kpi .l{color:var(--muted);font-size:14px;font-weight:700}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-bottom:22px}
+.panel h2{font-size:20px;margin-bottom:4px}
+.panel .desc{color:var(--muted);font-size:14px;margin-bottom:16px}
+
+/* tier bars */
+.dist{display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.dist span{display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:14px;color:var(--muted)}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+/* table / rows */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 14px;cursor:pointer;font-size:14px;font-weight:700;color:var(--muted)}
+.chip.active{background:var(--fg);color:#fff;border-color:var(--fg)}
+.row{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.score{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:17px}
+.row .who{font-weight:800}
+.row .meta{color:var(--muted);font-size:13px}
+.row .msg{font-size:14px;color:var(--fg);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:560px}
+.tier{font-size:12px;font-weight:900;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.tier.auto{background:rgba(18,184,134,.14);color:var(--mint)}
+.tier.review{background:rgba(245,159,0,.16);color:var(--amber)}
+.tier.reject{background:rgba(250,82,82,.14);color:var(--red)}
+.stagebadge{font-size:12px;font-weight:800;color:var(--muted)}
+.btn{border:none;cursor:pointer;font-weight:800;border-radius:10px;padding:9px 14px;font-size:14px}
+.btn.p{background:var(--pink);color:#fff}
+.btn.g{background:var(--mint);color:#fff}
+.btn.r{background:var(--panel);color:var(--red);border:1px solid var(--red)}
+.btn.s{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.btn:hover{filter:brightness(.96)}
+.rowbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.empty{color:var(--muted);text-align:center;padding:30px;font-size:15px}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(20,24,45,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.overlay.show{display:flex}
+.modal{background:var(--panel);border-radius:18px;max-width:520px;width:100%;padding:26px;box-shadow:0 30px 70px rgba(0,0,0,.3)}
+.modal h3{font-size:20px;margin-bottom:8px}
+.modal p{color:var(--muted);font-size:15px;margin:0 0 8px}
+.modal .box{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;margin:12px 0}
+.modal textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;font-family:inherit;min-height:120px}
+.modal .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+
+/* detail drawer */
+.detail dl{display:grid;grid-template-columns:110px 1fr;gap:6px 14px;margin:0}
+.detail dt{color:var(--muted);font-weight:700;font-size:14px}
+.detail dd{margin:0;font-size:15px}
+.reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.reasons span{font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--muted)}
+
+/* settings */
+.set label{display:block;font-weight:800;margin:14px 0 4px}
+.set input,.set textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:15px;font-family:inherit}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--fg);color:#fff;
+  padding:12px 20px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .3s;z-index:200}
+.toast.show{opacity:1}
+
+/* svg diagram */
+.diagram{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+.audit{max-height:230px;overflow:auto;font-size:13px}
+.audit div{padding:6px 0;border-bottom:1px dashed var(--line);color:var(--muted)}
+.audit b{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="brand">🛠 MELTY <span>受付トリアージ</span> 管理</div>
+      <div class="tagline">公式サイトの問い合わせ・予約をAIが自動採点 → 人の承認ゲートで安全に処理</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="reset" id="resetBtn">サンプルを初期化</button>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-v="dash">ダッシュボード</button>
+    <button class="tab" data-v="inbox">受信トレイ</button>
+    <button class="tab" data-v="gate">承認ゲート</button>
+    <button class="tab" data-v="reply">返信ドラフト</button>
+    <button class="tab" data-v="settings">設定 &amp; AIヒント</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <section class="view active" id="v-dash">
+    <div class="hint"><b>この画面でAIに頼むと良いこと</b>
+      <ul>
+        <li>「今日の問い合わせ傾向を3行で要約して」</li>
+        <li>「却下候補が多い理由を分析して、対策を提案して」</li>
+        <li>「対応が遅れている案件を優先度順に並べて」</li>
+      </ul>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="panel">
+      <h2>振り分け分布</h2>
+      <div class="desc">100点満点スコアで自動的に3段階へ振り分けています</div>
+      <div class="dist" id="dist"></div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--mint)"></i>自動でOK（80点〜）</span>
+        <span><i class="dot" style="background:var(--amber)"></i>人が確認（50〜79点）</span>
+        <span><i class="dot" style="background:var(--red)"></i>却下候補（〜49点）</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>システム全体像</h2>
+      <div class="desc">受信からAI自動採点、人の承認ゲート、返信まで（引き継ぎ型フロー）</div>
+      <svg class="diagram" viewBox="0 0 920 300" role="img" aria-label="システム全体像の図解">
+        <defs>
+          <marker id="arw" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6 Z" fill="#69708c"/>
+          </marker>
+        </defs>
+        <!-- nodes -->
+        <g font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle">
+          <rect x="20" y="120" width="140" height="64" rx="12" fill="#eef1ff" stroke="#4c6ef5"/>
+          <text x="90" y="148" fill="#1c2033">公式サイト</text>
+          <text x="90" y="168" fill="#69708c" font-size="12">問い合わせ/予約</text>
+
+          <rect x="205" y="120" width="150" height="64" rx="12" fill="#e9fbf4" stroke="#12b886"/>
+          <text x="280" y="148" fill="#1c2033">AI自動採点</text>
+          <text x="280" y="168" fill="#69708c" font-size="12">100点満点</text>
+
+          <rect x="400" y="30" width="150" height="56" rx="12" fill="#e9fbf4" stroke="#12b886"/>
+          <text x="475" y="55" fill="#12b886">自動でOK</text>
+          <text x="475" y="73" fill="#69708c" font-size="12">80点〜</text>
+
+          <rect x="400" y="122" width="150" height="56" rx="12" fill="#fff7e6" stroke="#f59f00"/>
+          <text x="475" y="147" fill="#f59f00">人が確認</text>
+          <text x="475" y="165" fill="#69708c" font-size="12">50〜79点</text>
+
+          <rect x="400" y="214" width="150" height="56" rx="12" fill="#ffeeee" stroke="#fa5252"/>
+          <text x="475" y="239" fill="#fa5252">却下候補</text>
+          <text x="475" y="257" fill="#69708c" font-size="12">〜49点</text>
+
+          <rect x="600" y="120" width="150" height="64" rx="12" fill="#ffeef6" stroke="#ff4d9d"/>
+          <text x="675" y="145" fill="#ff4d9d">承認ゲート</text>
+          <text x="675" y="165" fill="#69708c" font-size="12">人が承認</text>
+
+          <rect x="795" y="120" width="110" height="64" rx="12" fill="#eef1ff" stroke="#4c6ef5"/>
+          <text x="850" y="148" fill="#1c2033">返信</text>
+          <text x="850" y="168" fill="#69708c" font-size="12">ドラフト承認</text>
+        </g>
+        <!-- edges -->
+        <g stroke="#69708c" stroke-width="2" fill="none" marker-end="url(#arw)">
+          <path d="M160,152 L200,152"/>
+          <path d="M355,145 L398,66"/>
+          <path d="M355,152 L398,150"/>
+          <path d="M355,159 L398,236"/>
+          <path d="M550,58 C580,58 580,140 598,148"/>
+          <path d="M550,150 L598,152"/>
+          <path d="M750,152 L793,152"/>
+        </g>
+      </svg>
+    </div>
+    <div class="panel">
+      <h2>監査ログ（人の承認・却下の記録）</h2>
+      <div class="desc">大事な操作はすべて記録されます</div>
+      <div class="audit" id="audit"></div>
+    </div>
+  </section>
+
+  <!-- INBOX -->
+  <section class="view" id="v-inbox">
+    <div class="hint"><b>この画面でAIに頼むと良いこと</b>
+      <ul>
+        <li>「この案件の要点と、返信で触れるべき点を教えて」</li>
+        <li>「スコアが低い理由を説明して」</li>
+        <li>「同じ内容の重複問い合わせを見つけて」</li>
+      </ul>
+    </div>
+    <div class="filters" id="filters">
+      <button class="chip active" data-f="all">すべて</button>
+      <button class="chip" data-f="auto">自動でOK</button>
+      <button class="chip" data-f="review">人が確認</button>
+      <button class="chip" data-f="reject">却下候補</button>
+    </div>
+    <div id="inboxList"></div>
+  </section>
+
+  <!-- GATE -->
+  <section class="view" id="v-gate">
+    <div class="hint"><b>この画面でAIに頼むと良いこと</b>
+      <ul>
+        <li>「承認して良いか、リスクがあれば指摘して」</li>
+        <li>「まとめて承認できる安全な案件はどれ？」</li>
+        <li>「却下する場合の丁寧なお断り文面を作って」</li>
+      </ul>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2>承認ゲート（人が承認して次段階へ引き継ぐ関門）</h2>
+      <div class="desc">ここで承認されたものだけが返信ドラフト作成に進みます。承認・却下は記録されます。</div>
+    </div>
+    <div id="gateList"></div>
+  </section>
+
+  <!-- REPLY -->
+  <section class="view" id="v-reply">
+    <div class="hint"><b>この画面でAIに頼むと良いこと</b>
+      <ul>
+        <li>「この返信ドラフトをもっと丁寧に／短く書き直して」</li>
+        <li>「予約可能な時間帯を提案する一文を足して」</li>
+        <li>「送信前に失礼な表現がないかチェックして」</li>
+      </ul>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2>返信ドラフト（人が最終承認して送信）</h2>
+      <div class="desc">AIが下書きした返信を、人が確認・修正・承認してから「送信済（モック）」になります。</div>
+    </div>
+    <div id="replyList"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="v-settings">
+    <div class="hint"><b>この画面でAIに頼むと良いこと</b>
+      <ul>
+        <li>「繁忙期に合わせて自動OKのしきい値を提案して」</li>
+        <li>「返信テンプレをブランドの口調に合わせて改善して」</li>
+      </ul>
+    </div>
+    <div class="panel set">
+      <h2>しきい値の設定</h2>
+      <div class="desc">スコアの区切りを調整できます（保存すると即再計算）</div>
+      <label>自動でOK の下限（この点以上は auto）</label>
+      <input id="thAuto" type="number" min="1" max="100">
+      <label>人が確認 の下限（この点以上は review、未満は reject）</label>
+      <input id="thReview" type="number" min="0" max="99">
+      <label>予約完了の自動返信テンプレ</label>
+      <textarea id="tplReserve" rows="3"></textarea>
+      <div style="margin-top:16px"><button class="btn p" id="saveSet">設定を保存</button></div>
+    </div>
+    <div class="panel">
+      <h2>保存データ（localStorage）</h2>
+      <div class="desc">キー名は melty.triage.* で統一しています</div>
+      <div class="audit" id="keys"></div>
+    </div>
+  </section>
+</div>
+
+<!-- modal -->
+<div class="overlay" id="overlay">
+  <div class="modal detail" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ========== 保存キー（melty.triage.* に統一） ========== */
+const K={items:"melty.triage.items",audit:"melty.triage.audit",settings:"melty.triage.settings"};
+const $=id=>document.getElementById(id);
+function load(k,def){try{const v=JSON.parse(localStorage.getItem(k));return v==null?def:v;}catch(_){return def;}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v));}
+
+/* ========== サンプルデータ（12件） ========== */
+const SAMPLE=[
+  {name:"佐藤 めい",email:"mei@example.com",type:"予約",channel:"サイト",message:"土曜の15時に4名で予約したいです。スフレパンケーキ希望。"},
+  {name:"田中 商店",email:"press@tanaka.co.jp",type:"取材",channel:"サイト",message:"テレビ番組の取材を検討しています。来週の空き状況を教えてください。"},
+  {name:"山本 ゆう",email:"yuu@example.com",type:"コラボ",channel:"Instagram",message:"フォロワー5万のアカウントです。コラボ企画のご相談をさせてください。"},
+  {name:"匿名",email:"noreply@spam.xyz",type:"その他",channel:"サイト",message:"稼げる副業の案内です。今すぐ登録してください！！"},
+  {name:"鈴木 かな",email:"kana@example.com",type:"クレーム",channel:"サイト",message:"先日購入したプリンが崩れていました。至急対応をお願いします。"},
+  {name:"高橋 れん",email:"ren@example.com",type:"予約",channel:"電話メモ",message:"日曜のディナー、2名でお願いします。アレルギーは卵です。"},
+  {name:"渡辺",email:"",type:"その他",channel:"サイト",message:"営業時間は？"},
+  {name:"伊藤 みく",email:"miku@example.com",type:"予約",channel:"サイト",message:"来週金曜、6名で誕生日利用したいです。サプライズ演出は可能ですか？急ぎです。"},
+  {name:"中村 企画",email:"info@nakamura-ad.jp",type:"コラボ",channel:"サイト",message:"駅広告とのタイアップ企画のご提案です。担当者様につなげていただけますか。"},
+  {name:"小林 あい",email:"ai@example.com",type:"予約",channel:"サイト",message:"急遽キャンセルしたいのですが可能でしょうか。予約番号は分かりません。"},
+  {name:"加藤 そら",email:"sora@example.com",type:"取材",channel:"サイト",message:"学生新聞の取材です。短時間で構いませんのでお話を伺えませんか。"},
+  {name:"?",email:"bulk@promo.net",type:"その他",channel:"サイト",message:"バナー広告掲載しませんか。無料期間中！クリックはこちら"}
+];
+
+/* ========== スコアリング（100点満点・決定的） ========== */
+function scoreOf(it){
+  let s=45;const r=[];
+  const typeW={"予約":22,"取材":16,"コラボ":14,"クレーム":18,"その他":2};
+  s+=typeW[it.type]||0; if(typeW[it.type]>=14)r.push("優先タイプ:"+it.type);
+  if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(it.email)){s+=12;r.push("連絡先あり");}else{s-=14;r.push("連絡先が不十分");}
+  const len=(it.message||"").length;
+  if(len>=40){s+=14;r.push("内容が具体的");}else if(len<12){s-=10;r.push("情報が少ない");}
+  if(/急ぎ|至急|急遽|今週|来週|明日|本日/.test(it.message)){s+=8;r.push("緊急性あり");}
+  if(/クレーム|崩れ|不良|返金/.test(it.message+it.type)){s+=6;r.push("要フォロー");}
+  if(/副業|稼げる|無料期間|クリックはこちら|登録してください|掲載しませんか/.test(it.message)){s-=45;r.push("迷惑メールの疑い");}
+  if(/フォロワー|万/.test(it.message)&&it.type==="コラボ"){s+=6;r.push("影響力あり");}
+  s=Math.max(0,Math.min(100,Math.round(s)));
+  return {score:s,reasons:r};
+}
+function tierOf(score){const st=settings();return score>=st.thAuto?"auto":(score>=st.thReview?"review":"reject");}
+const TIER_LABEL={auto:"自動でOK",review:"人が確認",reject:"却下候補"};
+const TIER_COLOR={auto:"var(--mint)",review:"var(--amber)",reject:"var(--red)"};
+const STAGE_LABEL={triaged:"未処理",approved:"承認済(返信待ち)",sent:"送信済",rejected:"却下済"};
+
+/* ========== 設定 ========== */
+function settings(){return load(K.settings,{thAuto:80,thReview:50,
+  tplReserve:"この度はご予約のお問い合わせをありがとうございます。ご希望の日時で承りました。当日お会いできるのを楽しみにしております。— MELTY HARAJUKU"});}
+
+/* ========== 初期化 ========== */
+function seed(){
+  let id=1;
+  const items=SAMPLE.map(s=>{
+    const sc=scoreOf(s);
+    return {id:"M"+String(id++).padStart(3,"0"),...s,createdAt:new Date().toISOString(),
+      score:sc.score,reasons:sc.reasons,tier:tierOf(sc.score),stage:"triaged",reply:""};
+  });
+  save(K.items,items);save(K.audit,[{t:new Date().toISOString(),msg:"サンプル"+items.length+"件を投入し自動トリアージしました"}]);
+}
+function ensure(){if(!load(K.items,null))seed();}
+function items(){return load(K.items,[]);}
+function setItems(a){save(K.items,a);}
+function logAudit(msg){const a=load(K.audit,[]);a.unshift({t:new Date().toISOString(),msg});save(K.audit,a.slice(0,60));}
+function recalc(){const st=settings();setItems(items().map(it=>({...it,tier:tierOf(it.score)})));}
+
+/* ========== 描画ヘルパ ========== */
+function scoreColor(s){return s>=settings().thAuto?"var(--mint)":(s>=settings().thReview?"var(--amber)":"var(--red)");}
+function esc(t){const d=document.createElement("div");d.textContent=t==null?"":t;return d.innerHTML;}
+function fmt(iso){const d=new Date(iso);return d.toLocaleString("ja-JP",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});}
+
+/* ---- ダッシュボード ---- */
+function renderDash(){
+  const its=items();
+  const c={auto:0,review:0,reject:0};its.forEach(i=>c[i.tier]++);
+  const pend=its.filter(i=>i.stage==="triaged"&&i.tier!=="reject").length;
+  const sent=its.filter(i=>i.stage==="sent").length;
+  $("kpis").innerHTML=[
+    ["受信総数",its.length,"var(--blue)"],["自動でOK",c.auto,"var(--mint)"],
+    ["人が確認",c.review,"var(--amber)"],["承認待ち",pend,"var(--pink)"],["送信済",sent,"var(--fg)"]
+  ].map(k=>`<div class="kpi"><div class="n" style="color:${k[2]}">${k[1]}</div><div class="l">${k[0]}</div></div>`).join("");
+  const tot=its.length||1;
+  $("dist").innerHTML=["auto","review","reject"].map(t=>{
+    const w=c[t]/tot*100;return w?`<span style="width:${w}%;background:${TIER_COLOR[t]}">${c[t]}</span>`:"";
+  }).join("");
+  const a=load(K.audit,[]);
+  $("audit").innerHTML=a.length?a.map(x=>`<div><b>${fmt(x.t)}</b> — ${esc(x.msg)}</div>`).join(""):'<div class="empty">記録はまだありません</div>';
+}
+
+/* ---- 受信トレイ ---- */
+let inboxFilter="all";
+function rowHTML(it,btns){
+  return `<div class="row">
+    <div class="score" style="background:${scoreColor(it.score)}">${it.score}</div>
+    <div>
+      <div class="who">${esc(it.name)} <span class="tier ${it.tier}">${TIER_LABEL[it.tier]}</span>
+        <span class="stagebadge">・${STAGE_LABEL[it.stage]}</span></div>
+      <div class="meta">${esc(it.type)}／${esc(it.channel)}／${esc(it.email||"連絡先なし")}・${fmt(it.createdAt)}</div>
+      <div class="msg">${esc(it.message)}</div>
+    </div>
+    <div class="rowbtns">${btns}</div>
+  </div>`;
+}
+function renderInbox(){
+  const its=items().filter(i=>inboxFilter==="all"||i.tier===inboxFilter);
+  $("inboxList").innerHTML=its.length?its.map(it=>
+    rowHTML(it,`<button class="btn s" onclick="openDetail('${it.id}')">詳細</button>`)).join("")
+    :'<div class="empty">該当する案件はありません</div>';
+}
+
+/* ---- 承認ゲート ---- */
+function renderGate(){
+  const its=items().filter(i=>i.stage==="triaged");
+  $("gateList").innerHTML=its.length?its.map(it=>
+    rowHTML(it,`<button class="btn s" onclick="openDetail('${it.id}')">詳細</button>
+      <button class="btn g" onclick="askApprove('${it.id}')">承認して進める</button>
+      <button class="btn r" onclick="askReject('${it.id}')">却下</button>`)).join("")
+    :'<div class="empty">承認待ちの案件はありません 🎉</div>';
+}
+
+/* ---- 返信ドラフト ---- */
+function draftFor(it){
+  const st=settings();
+  if(it.type==="予約")return st.tplReserve;
+  if(it.type==="取材")return it.name+" 様\n取材のお問い合わせをありがとうございます。日程を調整のうえ担当よりご連絡いたします。— MELTY HARAJUKU";
+  if(it.type==="コラボ")return it.name+" 様\nコラボのご提案ありがとうございます。内容を拝見し、担当より折り返しご連絡いたします。— MELTY HARAJUKU";
+  if(it.type==="クレーム")return it.name+" 様\nこの度はご不便をおかけし申し訳ございません。至急確認のうえ対応いたします。— MELTY HARAJUKU";
+  return it.name+" 様\nお問い合わせありがとうございます。担当より確認のうえご連絡いたします。— MELTY HARAJUKU";
+}
+function renderReply(){
+  const its=items().filter(i=>i.stage==="approved"||i.stage==="sent");
+  $("replyList").innerHTML=its.length?its.map(it=>{
+    const sent=it.stage==="sent";
+    return `<div class="panel" style="margin-bottom:14px">
+      <div class="who">${esc(it.name)} <span class="tier ${it.tier}">${TIER_LABEL[it.tier]}</span>
+        <span class="stagebadge">・${STAGE_LABEL[it.stage]}</span></div>
+      <div class="meta" style="color:var(--muted);font-size:13px;margin:2px 0 10px">${esc(it.type)}／${esc(it.email||"連絡先なし")}</div>
+      <div class="box" style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;white-space:pre-wrap;font-size:14px">${esc(it.reply||draftFor(it))}</div>
+      <div class="rowbtns" style="margin-top:12px">
+        ${sent?'<span class="stagebadge">✅ 送信済（モック）</span>':
+        `<button class="btn s" onclick="openDraft('${it.id}')">下書きを編集</button>
+         <button class="btn g" onclick="askSend('${it.id}')">承認して送信</button>`}
+      </div></div>`;
+  }).join(""):'<div class="empty">返信待ちの案件はありません。承認ゲートで承認すると，ここに下書きが並びます。</div>';
+}
+
+/* ========== モーダル（自作・confirm不使用） ========== */
+let modalCb=null;
+function showModal(html,onOk){
+  $("modal").innerHTML=html;$("overlay").classList.add("show");modalCb=onOk||null;
+}
+function closeModal(){$("overlay").classList.remove("show");modalCb=null;}
+$("overlay").addEventListener("click",e=>{if(e.target===$("overlay"))closeModal();});
+function confirmModal(title,body,okLabel,onOk,okClass){
+  showModal(`<h3>${title}</h3><p>${body}</p>
+    <div class="acts"><button class="btn s" onclick="closeModal()">キャンセル</button>
+    <button class="btn ${okClass||'g'}" id="mOk">${okLabel}</button></div>`,onOk);
+  $("mOk").onclick=()=>{const cb=modalCb;closeModal();if(cb)cb();};
+}
+function find(id){return items().find(i=>i.id===id);}
+
+function openDetail(id){
+  const it=find(id);if(!it)return;
+  showModal(`<h3>案件 ${esc(it.id)}</h3>
+    <dl>
+      <dt>お名前</dt><dd>${esc(it.name)}</dd>
+      <dt>連絡先</dt><dd>${esc(it.email||"なし")}</dd>
+      <dt>種別</dt><dd>${esc(it.type)}（${esc(it.channel)}）</dd>
+      <dt>スコア</dt><dd><b style="color:${scoreColor(it.score)}">${it.score}点</b> → ${TIER_LABEL[it.tier]}</dd>
+      <dt>状態</dt><dd>${STAGE_LABEL[it.stage]}</dd>
+      <dt>本文</dt><dd>${esc(it.message)}</dd>
+    </dl>
+    <div class="reasons">${it.reasons.map(r=>`<span>${esc(r)}</span>`).join("")}</div>
+    <div class="acts"><button class="btn s" onclick="closeModal()">閉じる</button></div>`);
+}
+function askApprove(id){const it=find(id);if(!it)return;
+  confirmModal("承認して次段階へ進めますか？",
+    `${esc(it.name)}（${it.score}点／${TIER_LABEL[it.tier]}）を承認すると、返信ドラフト作成に進みます。`,
+    "承認する",()=>advance(id,"approved","承認"),"g");}
+function askReject(id){const it=find(id);if(!it)return;
+  confirmModal("この案件を却下しますか？",
+    `${esc(it.name)}（${it.score}点）を却下します。この操作は監査ログに残ります。`,
+    "却下する",()=>advance(id,"rejected","却下"),"r");}
+function askSend(id){const it=find(id);if(!it)return;
+  confirmModal("この内容で送信（モック）しますか？",
+    `${esc(it.name)} 宛の返信を送信済にします。実際の送信は行いません（モック）。`,
+    "承認して送信",()=>advance(id,"sent","返信送信"),"g");}
+function openDraft(id){const it=find(id);if(!it)return;
+  showModal(`<h3>返信ドラフトの編集</h3><p>${esc(it.name)} 様への返信（送信前に人が確認）</p>
+    <textarea id="draftTa">${esc(it.reply||draftFor(it))}</textarea>
+    <div class="acts"><button class="btn s" onclick="closeModal()">キャンセル</button>
+    <button class="btn g" id="mSave">保存</button></div>`);
+  $("mSave").onclick=()=>{const v=$("draftTa").value;const arr=items().map(x=>x.id===id?{...x,reply:v}:x);
+    setItems(arr);logAudit(find(id).name+" の返信下書きを更新しました");closeModal();refresh();toast("下書きを保存しました");};
+}
+function advance(id,stage,verb){
+  const arr=items().map(x=>{if(x.id!==id)return x;
+    const nx={...x,stage};if(stage==="approved"&&!nx.reply)nx.reply=draftFor(nx);return nx;});
+  setItems(arr);const it=find(id);logAudit(`${verb}: ${it.name}（${it.score}点／${TIER_LABEL[it.tier]}）→ ${STAGE_LABEL[stage]}`);
+  refresh();toast(verb+"しました");
+}
+
+/* ========== 設定画面 ========== */
+function renderSettings(){
+  const st=settings();
+  $("thAuto").value=st.thAuto;$("thReview").value=st.thReview;$("tplReserve").value=st.tplReserve;
+  $("keys").innerHTML=Object.values(K).map(k=>{
+    const raw=localStorage.getItem(k)||"";return `<div><b>${k}</b> … ${raw.length} 文字</div>`;
+  }).join("");
+}
+$("saveSet").onclick=()=>{
+  let a=parseInt($("thAuto").value,10),r=parseInt($("thReview").value,10);
+  if(isNaN(a)||isNaN(r)||r>=a){toast("しきい値が不正です（確認の下限 < 自動の下限）");return;}
+  const st=settings();st.thAuto=Math.max(1,Math.min(100,a));st.thReview=Math.max(0,Math.min(99,r));st.tplReserve=$("tplReserve").value;
+  save(K.settings,st);recalc();logAudit(`しきい値を更新（自動≥${st.thAuto} / 確認≥${st.thReview}）`);refresh();toast("設定を保存し再計算しました");
+};
+
+/* ========== toast ========== */
+let toastTimer=null;
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1800);}
+
+/* ========== タブ ========== */
+$("tabs").addEventListener("click",e=>{
+  const b=e.target.closest(".tab");if(!b)return;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  b.classList.add("active");$("v-"+b.dataset.v).classList.add("active");
+});
+$("filters").addEventListener("click",e=>{
+  const c=e.target.closest(".chip");if(!c)return;
+  document.querySelectorAll(".chip").forEach(x=>x.classList.remove("active"));
+  c.classList.add("active");inboxFilter=c.dataset.f;renderInbox();
+});
+$("resetBtn").onclick=()=>confirmModal("サンプルを初期化しますか？",
+  "現在のデータをすべて消し、サンプル12件を再投入します。","初期化する",()=>{seed();refresh();toast("初期化しました");},"r");
+
+/* ========== 更新 ========== */
+function refresh(){renderDash();renderInbox();renderGate();renderReply();renderSettings();}
+ensure();refresh();
+window.openDetail=openDetail;window.askApprove=askApprove;window.askReject=askReject;
+window.askSend=askSend;window.openDraft=openDraft;window.closeModal=closeModal;
+</script>
+</body>
+</html>
